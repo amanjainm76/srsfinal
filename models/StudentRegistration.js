@@ -4,6 +4,21 @@ const bcrypt = require("bcryptjs");
 
 const StudentRegistrationSchema = new mongoose.Schema(
   {
+    center: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Center",
+      required: true,
+    },
+    stream: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "streams",
+      required: true,
+    },
+    batch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Batch",
+      required: true,
+    },
     studentName: {
       type: String,
       required: [true, "Student name is required"],
@@ -43,7 +58,7 @@ const StudentRegistrationSchema = new mongoose.Schema(
         validator: function (password) {
           // Password must contain at least one number, one letter
           return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(
-            password
+            password,
           );
         },
         message: "Password must contain at least one letter and one number",
@@ -60,7 +75,7 @@ const StudentRegistrationSchema = new mongoose.Schema(
           return (
             v === "/assets/backend-img/user.png" ||
             /^\/uploads\/profile-images\/[a-zA-Z0-9._-]+\.(jpg|jpeg|png|gif)$/i.test(
-              v
+              v,
             )
           );
         },
@@ -203,7 +218,7 @@ const StudentRegistrationSchema = new mongoose.Schema(
         return ret;
       },
     },
-  }
+  },
 );
 
 // ✅ Hash password before saving
@@ -247,7 +262,7 @@ StudentRegistrationSchema.virtual("isLocked").get(function () {
 
 // ✅ Instance method to compare password
 StudentRegistrationSchema.methods.comparePassword = async function (
-  candidatePassword
+  candidatePassword,
 ) {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
@@ -313,7 +328,7 @@ StudentRegistrationSchema.index({ studentPhone: 1 }, { unique: true });
 StudentRegistrationSchema.index({ studentName: 1 });
 StudentRegistrationSchema.index(
   { registrationNumber: 1 },
-  { unique: true, sparse: true }
+  { unique: true, sparse: true },
 );
 StudentRegistrationSchema.index({ registrationDate: -1 });
 StudentRegistrationSchema.index({ status: 1 });
@@ -323,5 +338,5 @@ StudentRegistrationSchema.index({ passwordResetToken: 1 }, { sparse: true });
 
 module.exports = mongoose.model(
   "StudentRegistration",
-  StudentRegistrationSchema
+  StudentRegistrationSchema,
 );

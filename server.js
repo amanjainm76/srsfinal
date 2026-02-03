@@ -34,7 +34,8 @@ const assignmentRoutes = require("./router/studentRoutes/assignmentRoutes");
 const practiceRoutes = require("./router/studentRoutes/practiceRoutes");
 const testStudentRoutes = require("./router/studentRoutes/testStudentRoutes");
 const studentMaterialRoutes = require("./router/studentRoutes/studentMaterialRoutes");
-
+const CenterRoutes = require("./router/center-router");
+const batchRoutes = require("./router/batch-router");
 const corsOption = {
   method: "GET,POST,PUT,DELETE,PATCH,HEAD",
   credential: true,
@@ -89,6 +90,8 @@ app.use("/api/assignments", assignmentRoutes);
 app.use("/api/practice", practiceRoutes);
 app.use("/api/tests", testStudentRoutes);
 app.use("/api/student/materials", studentMaterialRoutes);
+app.use("/api/auth/center", CenterRoutes);
+app.use("/api/auth/batch", batchRoutes);
 app.get("/api/student/materials/test", (req, res) => {
   console.log("✅ TEST ROUTE HIT");
   res.json({ success: true, message: "Test route works" });

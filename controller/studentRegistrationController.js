@@ -1,4 +1,4 @@
-// controller/studentRegistrationController.js - COMPLETE CODE
+// controller/studentRegistrationController.js - COMPLETE & FIXED CODE
 
 const StudentRegistration = require("../models/StudentRegistration");
 const bcrypt = require("bcryptjs");
@@ -23,10 +23,14 @@ const formatDate = () => {
   }).format(date);
 };
 
-// Student Registration
+// Student Registration (CREATE)
 const createStudentRegistration = async (req, res) => {
   try {
+    // ✅ 1. यहाँ center, stream, batch को destructure किया गया है
     const {
+      center,
+      stream,
+      batch,
       studentName,
       studentEmail,
       studentPhone,
@@ -43,6 +47,9 @@ const createStudentRegistration = async (req, res) => {
 
     // Validation
     const requiredFields = [
+      "center", // ✅ Center जरूरी है
+      "stream", // ✅ Stream जरूरी है
+      "batch", // ✅ Batch जरूरी है
       "studentName",
       "studentEmail",
       "studentPhone",
@@ -102,6 +109,9 @@ const createStudentRegistration = async (req, res) => {
 
     // Create new student
     const newStudent = await StudentRegistration.create({
+      center, // ✅ 2. डेटाबेस में भेजा जा रहा है
+      stream, // ✅ 2. डेटाबेस में भेजा जा रहा है
+      batch, // ✅ 2. डेटाबेस में भेजा जा रहा है
       studentName,
       studentEmail: cleanEmail,
       studentPhone: cleanPhone,
@@ -121,23 +131,14 @@ const createStudentRegistration = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Student registered successfully",
-      student: {
-        id: newStudent._id,
-        studentName: newStudent.studentName,
-        studentEmail: newStudent.studentEmail,
-        studentPhone: newStudent.studentPhone,
-        course: newStudent.course,
-        registrationNumber: newStudent.registrationNumber,
-        registrationDate: newStudent.registrationDate,
-        status: newStudent.status,
-      },
+      student: newStudent,
     });
   } catch (error) {
     console.error("Error creating student registration:", error);
 
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
-        err => err.message
+        err => err.message,
       );
       return res.status(400).json({
         success: false,
@@ -167,9 +168,10 @@ const loginStudent = async (req, res) => {
     }
 
     // Find student by email or phone
-    const student = await StudentRegistration.findByEmailOrPhone(
-      identifier
-    ).select("+password");
+    const student =
+      await StudentRegistration.findByEmailOrPhone(identifier).select(
+        "+password",
+      );
     if (!student) {
       return res.status(400).json({
         success: false,
@@ -231,7 +233,7 @@ const loginStudent = async (req, res) => {
   }
 };
 
-// Get all student registrations
+// Get all student registrations (READ)
 const getAllStudentRegistrations = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -251,6 +253,8 @@ const getAllStudentRegistrations = async (req, res) => {
     }
 
     const students = await StudentRegistration.find(filter)
+      // ✅ 3. यहाँ Populate लगाया गया है ताकि पूरा डेटा दिखे
+      .populate("center stream batch")
       .select("-password -passwordResetToken -__v")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -292,9 +296,9 @@ const getStudentRegistrationById = async (req, res) => {
       });
     }
 
-    const student = await StudentRegistration.findById(id).select(
-      "-password -passwordResetToken -__v"
-    );
+    const student = await StudentRegistration.findById(id)
+      .populate("center stream batch") // ✅ यहाँ भी populate
+      .select("-password -passwordResetToken -__v");
 
     if (!student) {
       return res.status(404).json({
@@ -330,9 +334,9 @@ const getCurrentStudentProfile = async (req, res) => {
       });
     }
 
-    const student = await StudentRegistration.findById(id).select(
-      "-password -passwordResetToken -__v"
-    );
+    const student = await StudentRegistration.findById(id)
+      .populate("center stream batch") // ✅ Populate
+      .select("-password -passwordResetToken -__v");
 
     if (!student) {
       return res.status(404).json({
@@ -427,7 +431,7 @@ const updateCurrentStudentProfile = async (req, res) => {
       // Password validation regex
       if (
         !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(
-          updateData.password
+          updateData.password,
         )
       ) {
         return res.status(400).json({
@@ -469,8 +473,10 @@ const updateCurrentStudentProfile = async (req, res) => {
         new: true,
         runValidators: true,
         context: "query",
-      }
-    ).select("-password -passwordResetToken -__v");
+      },
+    )
+      .populate("center stream batch")
+      .select("-password -passwordResetToken -__v");
 
     res.status(200).json({
       success: true,
@@ -482,7 +488,7 @@ const updateCurrentStudentProfile = async (req, res) => {
 
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
-        err => err.message
+        err => err.message,
       );
       return res.status(400).json({
         success: false,
@@ -597,8 +603,10 @@ const updateStudentById = async (req, res) => {
     const updatedStudent = await StudentRegistration.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true, runValidators: true }
-    ).select("-password -passwordResetToken -__v");
+      { new: true, runValidators: true },
+    )
+      .populate("center stream batch")
+      .select("-password -passwordResetToken -__v");
 
     res.status(200).json({
       success: true,
@@ -610,7 +618,7 @@ const updateStudentById = async (req, res) => {
 
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
-        err => err.message
+        err => err.message,
       );
       return res.status(400).json({
         success: false,
@@ -669,7 +677,7 @@ const createStudentProfile = async (req, res) => {
     const updatedStudent = await StudentRegistration.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).select("-password -passwordResetToken -__v");
 
     res.status(201).json({
@@ -744,7 +752,7 @@ const uploadProfileImage = async (req, res) => {
           updatedOn: formatDate(),
         },
       },
-      { new: true }
+      { new: true },
     ).select("studentprofileImage");
 
     res.status(200).json({
@@ -794,7 +802,7 @@ const deleteCurrentStudentProfile = async (req, res) => {
     // Optional: Require password confirmation for deletion
     if (req.body.confirmPassword) {
       const isPasswordValid = await student.comparePassword(
-        req.body.confirmPassword
+        req.body.confirmPassword,
       );
       if (!isPasswordValid) {
         return res.status(400).json({
@@ -912,7 +920,9 @@ const getStudentDashboard = async (req, res) => {
       });
     }
 
-    const student = await StudentRegistration.findById(id);
+    const student = await StudentRegistration.findById(id).populate(
+      "center stream batch",
+    );
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -926,6 +936,9 @@ const getStudentDashboard = async (req, res) => {
         email: student.studentEmail,
         registrationNumber: student.registrationNumber,
         course: student.course,
+        center: student.center?.centerName || "N/A", // ✅ Added Center Name
+        stream: student.stream?.streamName || "N/A", // ✅ Added Stream Name
+        batch: student.batch?.batchName || "N/A", // ✅ Added Batch Name
         status: student.status,
         profileImage: student.studentprofileImage,
         registrationDate: formatDate(student.registrationDate),
@@ -980,9 +993,8 @@ const changePassword = async (req, res) => {
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await student.comparePassword(
-      currentPassword
-    );
+    const isCurrentPasswordValid =
+      await student.comparePassword(currentPassword);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({
         success: false,
