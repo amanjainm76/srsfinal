@@ -1,26 +1,40 @@
 const express = require("express");
 const router = express.Router();
-const topicController = require("../controller/topicController"); // Adjust path based on your file structure
+const topicController = require("../controller/topicController");
 
-// GET: Fetch filtered topics based on query parameters
-router.get("/topic", topicController.getFilteredTopics);
 
-// Create a new topic
-router.post("/topic", topicController.createTopic);
+router.get("/unit/:unitId", topicController.getTopicsByUnit);
 
-// Get all topics
+// ==============================
+// ✅ GET ALL TOPICS
+// ==============================
 router.get("/topic", topicController.getAllTopics);
 
-// Get a single topic by ID
+// ==============================
+// ✅ FILTER TOPICS (separate route)
+// ==============================
+router.get("/topic/filter", topicController.getFilteredTopics);
+
+// ==============================
+// ✅ CREATE
+// ==============================
+router.post("/topic", topicController.createTopic);
+
+// ==============================
+// ✅ GET SINGLE
+// ==============================
 router.get("/topic/:id", topicController.getTopicById);
 
-// Update a topic by ID
+// ==============================
+// ✅ UPDATE
+// ==============================
 router.put("/topic/:id", topicController.updateTopic);
 
-// Delete a topic by ID
+// ==============================
+// ✅ DELETE
+// ==============================
 router.delete("/topic/:id", topicController.deleteTopic);
 
-// Add a sub-topic to a specific unit within a topic
-router.put("/:topicId/units/:unitTitle/subtopics", topicController.addSubTopic);
+router.get("/topics/independent", topicController.getAllTopicsIndependent);
 
 module.exports = router;

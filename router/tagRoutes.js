@@ -17,4 +17,6 @@ router.put("/tags/:id", tagController.updateTag);
 // Route to delete a tag by ID
 router.delete("/tags/:id", tagController.deleteTag);
 
+router.get("/tags-dropdown", tagController.getTagsDropdown);
+
 module.exports = router;

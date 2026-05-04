@@ -17,4 +17,6 @@ router.put("/streams/:id", streamController.updateStream);
 // Route to delete a stream by ID
 router.delete("/streams/:id", streamController.deleteStream);
 
+router.get("/streams-dropdown", streamController.getStreamsForDropdown);
+
 module.exports = router;

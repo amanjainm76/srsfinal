@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 const innerSubjectUnitController = require("../controller/innerSubjectUnitController");
 
+router.get(
+  "/innerSubjectUnits/all",
+  innerSubjectUnitController.getAllInnerSubjectUnits
+);
+
 // Route to create an inner subject unit
 router.post(
   "/innerSubjectUnits",

@@ -121,10 +121,33 @@ const deleteDifficultyLevel = async (req, res) => {
   }
 };
 
+const getDifficultyDropdown = async (req, res) => {
+  try {
+    const levels = await DifficultyLevel.find().select("_id title");
+
+    const formatted = levels.map((item) => ({
+      value: item._id,
+      label: item.title, // ✅ correct field
+    }));
+
+    res.json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching difficulty levels",
+    });
+  }
+};
+
 module.exports = {
   createDifficultyLevel,
   getAllDifficultyLevel,
   getDifficultyLevelById,
   updateDifficultyLevel,
   deleteDifficultyLevel,
+  getDifficultyDropdown,
 };

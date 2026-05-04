@@ -108,10 +108,43 @@ const deleteStream = async (req, res) => {
   }
 };
 
+
+const getStreamsForDropdown = async (req, res) => {
+  try {
+    const search = req.query.search || "";
+
+    const streams = await Stream.find({
+      title: { $regex: search, $options: "i" },
+      active: true // optional (only active streams)
+    })
+    .select("_id title") // ⚡ only required fields (performance)
+    .sort({ title: 1 });
+
+    const formattedStreams = streams.map(item => ({
+      value: item._id,
+      label: item.title
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formattedStreams
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching streams for dropdown",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createStream,
   getStreams,
   getStreamById,
   updateStream,
   deleteStream,
+  getStreamsForDropdown,
 };

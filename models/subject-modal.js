@@ -13,11 +13,14 @@ const subjectSchema = new mongoose.Schema({
     type: [String], // Should be an array of strings
     required: true,
   },
-  stream: {
-    type: [String],
-    enum: ["Commerce", "Medical", "Foundation", "Engineering"], // Allow multiple streams
+  stream:
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Stream",
     required: true,
+    index: true,
   },
+
   createdBy: {
     type: String,
     required: true,

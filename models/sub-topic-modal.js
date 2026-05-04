@@ -10,31 +10,39 @@ const subTopicSchema = new mongoose.Schema({
     required: true,
   },
   content: {
-    type: [String], // Should be an array of strings
+    type: [String],
     required: true,
   },
+  
+  topic: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Topic",
+    required: true,
+  },
+
   createdBy: {
     type: String,
-    required: true,
-    default: "superadmin", // Default value, adjust if needed
+    default: "superadmin",
   },
   createdOn: {
-    type: String,
-    required: true,
+    type: Date,
+    default: Date.now,
   },
   updatedBy: {
     type: String,
-    required: true,
-    default: "superadmin", // Default value, adjust if needed
+    default: "superadmin",
   },
   updatedOn: {
-    type: String,
-    required: true,
+    type: Date,
+    default: Date.now,
   },
   active: {
     type: Boolean,
+    default: true,
   },
 });
-const SubTopic = mongoose.model("subtopics", subTopicSchema); // This is correct
+
+// ✅ FIXED MODEL NAME
+const SubTopic = mongoose.model("SubTopic", subTopicSchema);
 
 module.exports = SubTopic;

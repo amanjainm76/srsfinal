@@ -107,10 +107,32 @@ const deleteTag = async (req, res) => {
   }
 };
 
+const getTagsDropdown = async (req, res) => {
+  try {
+    const tags = await Tag.find().select("_id title");
+
+    const formatted = tags.map((item) => ({
+      value: item._id,
+      label: item.title, // ✅ correct field
+    }));
+
+    res.json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching tags",
+    });
+  }
+};
+
 module.exports = {
   createTag,
   getTag,
   getTagById,
   updateTag,
   deleteTag,
+  getTagsDropdown
 };

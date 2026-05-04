@@ -17,4 +17,6 @@ router.put("/skills/:id", skillsController.updateSkills);
 // Route to delete a skill by ID
 router.delete("/skills/:id", skillsController.deleteSkills);
 
+router.get("/skills-dropdown", skillsController.getSkillsDropdown);
+
 module.exports = router;

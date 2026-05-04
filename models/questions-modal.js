@@ -3,17 +3,71 @@ const mongoose = require("mongoose");
 const questionSchema = new mongoose.Schema({
   SRSUniqueCode: {
     type: Number,
-    unique: true, // Ensuring uniqueness
+    unique: true,
   },
 
-  subjectType: {
-    type: [String],
-    default: [], // Default empty array if not provided
+  // ✅ STREAM
+  stream: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "streams",
+      required: true,
+    },
+    name: String,
+    code: Number,
   },
+
+  // ✅ SUBJECT
+  subject: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "subjects",
+      required: true,
+    },
+    name: String,
+    code: Number,
+  },
+
+  // ✅ UNIT
+  unit: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "InnerSubjectUnit",
+      required: true,
+    },
+    name: String,
+    code: Number,
+  },
+
+  // ✅ TOPIC
+  topic: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Topic",
+      required: true,
+    },
+    name: String,
+    code: Number,
+  },
+
+  // ✅ SUBTOPIC (MULTIPLE)
+  subTopics: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SubTopic",
+      },
+      name: String,
+      code: Number,
+    },
+  ],
+
+  // ✅ MAIN QUESTION
   enterQuestion: {
-    type: [String],
-    default: [], // Default empty array if not provided
+    type: String,
+    required: true,
   },
+
   questions: [
     {
       questionType: {
@@ -35,190 +89,77 @@ const questionSchema = new mongoose.Schema({
           "True False",
           "Subjective",
         ],
+        required: true,
       },
 
       options: {
         type: [String],
-        default: [], // Default empty array if not provided
+        default: [],
       },
 
       correctAnswers: {
         type: [Number],
-        default: [], // Default empty array if not provided
-      },
-
-      assertionAnswer: {
-        type: String,
-        default: null, // Default null if not provided
-      },
-
-      reasoningAnswer: {
-        type: String,
-        default: null, // Default null if not provided
+        default: [],
       },
 
       matrixAnswer: {
         type: Map,
         of: Boolean,
-        default: null, // Default null if not provided
+        default: null,
       },
 
-      numericAnswer: {
-        type: Number,
-        default: null, // Default null if not provided
-      },
+      singleInteger: Number,
+      fourDigit: Number,
+      numericAnswerStartRange: Number,
+      numericAnswerEndRange: Number,
 
-      singleInteger: {
-        type: Number,
-        default: null, // Default null if not provided
-      },
+      trueFalseAnswer: Boolean,
 
-      fourDigit: {
-        type: Number,
-        default: null, // Default null if not provided
-      },
-
-      numericAnswerStartRange: {
-        type: Number,
-        default: null, // Default null if not provided
-      },
-
-      numericAnswerEndRange: {
-        type: Number,
-        default: null, // Default null if not provided
-      },
-
-      trueFalseAnswer: {
-        type: Boolean,
-        default: null, // Default null if not provided
-      },
-
-      questionContent: {
-        type: String,
-        default: null, // Default null if not provided
-      },
-
-      subjectiveAnswerFormat: {
-        type: String,
-        default: null, // Default null if not provided
-      },
+      subjectiveAnswerFormat: String,
 
       comprehensionText: {
-        subQuestionType: {
-          type: [String],
-          default: [],
-        },
-        isActiveC: {
-          type: Boolean,
-          default: false, // Default false if not provided
-        },
-        enterQuestionC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        correctAnswersC: {
-          type: [Number],
-          default: [], // Default empty array if not provided
-        },
-        optionsC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        urlC: {
-          type: String,
-          default: null, // Default null if not provided
-        },
-        hintsSolutionC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        streamC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        subTopicC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        skillsC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        tagC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
-        levelC: {
-          type: [String],
-          default: [], // Default empty array if not provided
-        },
+        subQuestionType: [String],
+        isActiveC: Boolean,
+        enterQuestionC: [String],
+        correctAnswersC: [Number],
+        optionsC: [String],
+        urlC: String,
+        hintsSolutionC: [String],
+        streamC: [String],
+        subTopicC: [String],
+        skillsC: [String],
+        tagC: [String],
+        levelC: [String],
       },
     },
   ],
 
-  url: {
-    type: String,
-    default: null, // Default null if not provided
-  },
+  // ✅ META FIELDS
+  url: String,
+  hitsSolution: [String],
 
-  hitsSolution: {
-    type: [String],
-    default: [], // Default empty array if not provided
-  },
-
-  stream: {
-    type: [String],
-    default: [], // Default empty array if not provided
-  },
-
-  subTopic: {
-    type: [String],
-    default: [], // Default empty array if not provided
-  },
-
-  skills: {
-    type: [String],
-    default: [], // Default empty array if not provided
-  },
-
-  tags: {
-    type: [String],
-    default: [], // Default empty array if not provided
-  },
-
-  level: {
-    type: [String],
-    default: [], // Default empty array if not provided
-  },
+  skills: [String],
+  tags: [String],
+  level: [String],
 
   createdBy: {
     type: String,
-    required: true,
-    default: "super admin", // Default value
+    default: "super admin",
   },
 
-  createdOn: {
-    type: String,
-    required: true,
-  },
+  createdOn: String,
 
   updatedBy: {
     type: String,
-    required: true,
-    default: "super admin", // Default value
+    default: "super admin",
   },
 
-  updatedOn: {
-    type: String,
-    required: true,
-  },
+  updatedOn: String,
 
   active: {
     type: Boolean,
-    required: true, // Make active field required
+    required: true,
   },
 });
 
-const Question = mongoose.model("questions", questionSchema);
-
-module.exports = Question;
+module.exports = mongoose.model("questions", questionSchema);

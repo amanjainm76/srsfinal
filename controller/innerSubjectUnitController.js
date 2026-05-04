@@ -1,132 +1,220 @@
+const mongoose = require("mongoose");
 const Subject = require("../models/subject-modal");
 const InnerSubjectUnit = require("../models/inner-subjectUnit-modal");
 
-const mongoose = require("mongoose"); // Ensure mongoose is imported
+// ✅ Helper
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
+// ✅ Create Unit
 const createInnerSubjectUnit = async (req, res) => {
   try {
-    const { subjectId, title, content, url, createdOn, updatedOn, active } =
-      req.body;
+    let { subject, title, content, url, active } = req.body;
 
-    // Validate required fields
-    if (!subjectId || !title || !content || !url || !createdOn || !updatedOn) {
-      return res.status(400).json({ message: "All fields are required" });
+    // 🔥 Validation
+    if (!subject || !title || !content || !url) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject, title, content and URL are required",
+      });
     }
 
-    // Validate that subjectId is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(subjectId)) {
-      return res.status(400).json({ message: "Invalid subjectId format" });
+    // ✅ Validate subject ID
+    if (!isValidObjectId(subject)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subject ID",
+      });
     }
 
-    // Create a new InnerSubjectUnit
-    const newInnerSubjectUnit = new InnerSubjectUnit({
+    // ✅ Check subject exists
+    const subjectExists = await Subject.findById(subject);
+    if (!subjectExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Subject not found",
+      });
+    }
+
+    // ✅ content must be array
+    if (!Array.isArray(content)) {
+      content = [content];
+    }
+
+    const newUnit = new InnerSubjectUnit({
+      subject, // ✅ direct reference
       title,
       content,
       url,
-      createdOn,
-      updatedOn,
       active,
+      createdOn: new Date(),   // ✅ ADD THIS
+      updatedOn: new Date(),   // ✅ ADD THIS
     });
 
-    await newInnerSubjectUnit.save();
-
-    // Find the subject by ObjectId
-    const subject = await Subject.findById(subjectId);
-
-    if (!subject) {
-      return res.status(404).json({ message: "Subject not found", subjectId });
-    }
-
-    // Add the new inner subject unit to the subject's innerSubjects array
-    subject.innerSubjects.push(newInnerSubjectUnit._id);
-
-    await subject.save();
+    const saved = await newUnit.save();
 
     res.status(201).json({
-      message: "Inner subject unit created and added to the subject",
-      innerSubjectUnit: newInnerSubjectUnit,
-      subject,
+      success: true,
+      data: saved,
     });
+
   } catch (error) {
-    console.error("Error creating inner subject unit:", error);
+    console.error("Create Unit Error:", error);
     res.status(500).json({
-      message: "Failed to create inner subject unit",
+      success: false,
+      message: "Failed to create unit",
       error: error.message,
     });
   }
 };
 
+// ✅ Get Units by Subject
 const getInnerSubjectUnitsBySubject = async (req, res) => {
-  const { subjectId } = req.params;
-
   try {
-    const subject = await Subject.findById(subjectId).populate("innerSubjects");
+    const { subjectId } = req.params;
 
-    if (!subject) {
-      return res.status(404).json({ message: "Subject not found" });
+    if (!isValidObjectId(subjectId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subject ID",
+      });
     }
 
-    res.status(200).json(subject.innerSubjects);
+    const units = await InnerSubjectUnit.find({ subject: subjectId })
+      .populate("subject", "title")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: units,
+    });
+
   } catch (error) {
-    console.error("Error fetching inner subject units:", error);
+    console.error("Fetch Units Error:", error);
     res.status(500).json({
-      message: "Failed to fetch inner subject units",
+      success: false,
+      message: "Failed to fetch units",
       error: error.message,
     });
   }
 };
 
-const updateInnerSubjectUnit = async (req, res) => {
-  const { id } = req.params;
-  const { title, url, content, updatedOn, active } = req.body;
-
+// ✅ Get All Units (optional filter)
+const getAllInnerSubjectUnits = async (req, res) => {
   try {
-    const updatedUnits = await InnerSubjectUnit.findByIdAndUpdate(
+    const { subject } = req.query;
+
+    let filter = { active: true };
+
+    if (subject && isValidObjectId(subject)) {
+      filter.subject = subject;
+    }
+
+    const units = await InnerSubjectUnit.find(filter)
+      .select("_id title subject")
+      .populate("subject", "title")
+      .sort({ title: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: units,
+    });
+
+  } catch (error) {
+    console.error("Error fetching units:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch units",
+      error: error.message,
+    });
+  }
+};
+
+// ✅ Update Unit
+const updateInnerSubjectUnit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { title, url, content, subject, active } = req.body;
+
+    // ✅ Validate subject if updating
+    if (subject && !isValidObjectId(subject)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subject ID",
+      });
+    }
+
+    // ✅ Normalize content
+    if (content && !Array.isArray(content)) {
+      content = [content];
+    }
+
+    const updated = await InnerSubjectUnit.findByIdAndUpdate(
       id,
       {
         title,
         url,
         content,
-        updatedOn,
+        subject,
         active,
       },
-      { new: true } // Return the updated stream
-    );
+      { new: true }
+    ).populate("subject", "title");
 
-    if (!updatedUnits) {
-      return res.status(404).json({ message: "Units not found" });
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Unit not found",
+      });
     }
 
-    res.status(200).json(updatedUnits); // Return the updated stream
+    res.status(200).json({
+      success: true,
+      data: updated,
+    });
+
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error updating Units", error: error.message });
+    console.error("Update Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating unit",
+      error: error.message,
+    });
   }
 };
-const deleteInnerSubjectUnit = async (req, res) => {
-  const { id } = req.params;
 
+// ✅ Delete Unit
+const deleteInnerSubjectUnit = async (req, res) => {
   try {
-    const deletedStream = await InnerSubjectUnit.findByIdAndDelete(id);
-    if (!deletedStream) {
-      return res.status(404).json({ message: "Stream not found" });
+    const { id } = req.params;
+
+    const deleted = await InnerSubjectUnit.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Unit not found",
+      });
     }
-    res
-      .status(200)
-      .json({ message: "Inner Subject deleted successfully", deletedStream });
+
+    res.status(200).json({
+      success: true,
+      message: "Unit deleted successfully",
+    });
+
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error deleting Subject", error: error.message });
+    console.error("Delete Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting unit",
+      error: error.message,
+    });
   }
 };
 
 module.exports = {
   createInnerSubjectUnit,
   getInnerSubjectUnitsBySubject,
+  getAllInnerSubjectUnits,
   updateInnerSubjectUnit,
   deleteInnerSubjectUnit,
 };

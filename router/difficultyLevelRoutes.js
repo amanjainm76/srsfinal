@@ -34,4 +34,6 @@ router.delete(
   difficultyLevelController.deleteDifficultyLevel
 );
 
+router.get("/difficulty-dropdown", difficultyLevelController.getDifficultyDropdown);
+
 module.exports = router;

@@ -6,6 +6,7 @@ const {
   getSubjectById,
   updateSubject,
   deleteSubject,
+  getSubjectsDropdown
 } = require("../controller/subjectController");
 
 // Route to create a new subject
@@ -22,5 +23,7 @@ router.put("/subjects/:id", updateSubject);
 
 // Route to delete a subject by ID
 router.delete("/subjects/:id", deleteSubject);
+
+router.get("/subjects-dropdown", getSubjectsDropdown);
 
 module.exports = router;

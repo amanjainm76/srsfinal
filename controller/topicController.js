@@ -1,66 +1,91 @@
-const Topic = require("../models/topic-modal"); // Adjust path based on your file structure
+const mongoose = require("mongoose");
+const Topic = require("../models/topic-modal");
 
-// Create a new Topic
-
+// ==============================
+// ✅ CREATE TOPIC
+// ==============================
 const createTopic = async (req, res) => {
-  const {
-    title,
-    url,
-    content,
-    units,
-    createdBy,
-    updatedBy,
-    createdOn,
-    updatedOn,
-    active,
-  } = req.body;
-
   try {
+    const {
+      title,
+      url,
+      content,
+      stream,
+      subject,
+      unit, // ✅ changed
+      active,
+    } = req.body;
+
+    if (!title || !url || !content || !stream || !subject || !unit) {
+      return res.status(400).json({
+        message: "Required fields missing",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(stream) ||
+      !mongoose.Types.ObjectId.isValid(subject) ||
+      !mongoose.Types.ObjectId.isValid(unit) // ✅ validate
+    ) {
+      return res.status(400).json({
+        message: "Invalid IDs",
+      });
+    }
+
     const newTopic = new Topic({
       title,
       url,
       content,
-      units,
-      createdBy,
-      createdOn,
-      updatedBy,
-      updatedOn,
+      stream,
+      subject,
+      unit, // ✅ correct field
+      createdOn: new Date(),
+      updatedOn: new Date(),
       active,
     });
 
-    // Save the new topic to the database
     const savedTopic = await newTopic.save();
 
-    res.status(201).json(savedTopic); // Respond with the saved topic
+    res.status(201).json(savedTopic);
+
   } catch (error) {
     console.error("Error creating topic:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating topic", error: error.message });
+    res.status(500).json({
+      message: "Error creating topic",
+      error: error.message,
+    });
   }
 };
 
-module.exports = { createTopic };
-
-// Get all Topics
+// ==============================
+// ✅ GET ALL TOPICS
+// ==============================
 const getAllTopics = async (req, res) => {
   try {
-    const topics = await Topic.find();
+    const topics = await Topic.find()
+      .populate("stream", "title")
+      .populate("subject", "title") // ⚠️ name nahi, title hai
+      .populate("unit", "title");   // ✅ units → unit
+
     res.status(200).json(topics);
   } catch (error) {
     console.error("Error fetching topics:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to fetch topics", error: error.message });
+    res.status(500).json({
+      message: "Failed to fetch topics",
+      error: error.message,
+    });
   }
 };
 
-// Get a single Topic by ID
+// ==============================
+// ✅ GET BY ID
+// ==============================
 const getTopicById = async (req, res) => {
-  const { topicId } = req.params;
-
   try {
-    const topic = await Topic.findById(topicId);
+    const topic = await Topic.findById(req.params.topicId)
+      .populate("stream", "name")
+      .populate("subject", "title")
+      .populate("unit", "title content");
 
     if (!topic) {
       return res.status(404).json({ message: "Topic not found" });
@@ -69,129 +94,97 @@ const getTopicById = async (req, res) => {
     res.status(200).json(topic);
   } catch (error) {
     console.error("Error fetching topic:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to fetch topic", error: error.message });
+    res.status(500).json({
+      message: "Failed to fetch topic",
+      error: error.message,
+    });
   }
 };
 
-// Update a Topic by ID
-
+// ==============================
+// ✅ UPDATE
+// ==============================
 const updateTopic = async (req, res) => {
-  const { id } = req.params;
-  const { title, url, content, units, updatedOn, active } = req.body;
-
   try {
+    const { id } = req.params;
+
     const updatedTopic = await Topic.findByIdAndUpdate(
       id,
       {
-        title,
-        url,
-        content,
-        units,
-        updatedOn,
-        active,
+        ...req.body,
+        updatedOn: new Date().toLocaleString(),
       },
-      { new: true } // Return the updated stream
+      { new: true }
     );
 
     if (!updatedTopic) {
-      return res.status(404).json({ message: "Topics not found" });
-    }
-
-    res.status(200).json(updatedTopic); // Return the updated stream
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error updating topics", error: error.message });
-  }
-};
-
-// Delete a Topic by ID
-const deleteTopic = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const deletedTopics = await Topic.findByIdAndDelete(id);
-    if (!deletedTopics) {
-      return res.status(404).json({ message: "Sub Topics not found" });
-    }
-    res
-      .status(200)
-      .json({ message: "Topics deleted successfully", deletedTopics });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error deleting  Topics", error: error.message });
-  }
-};
-
-// Add a sub-topic to a specific unit
-const addSubTopic = async (req, res) => {
-  const { topicId, unitTitle } = req.params;
-  const { subTitle } = req.body;
-
-  try {
-    const topic = await Topic.findById(topicId);
-
-    if (!topic) {
       return res.status(404).json({ message: "Topic not found" });
     }
 
-    const unit = topic.units.find(u => u.unitTitle === unitTitle);
-
-    if (!unit) {
-      return res.status(404).json({ message: "Unit not found" });
-    }
-
-    unit.subTopics.push({ subTitle });
-    await topic.save();
-
-    res.status(200).json({ message: "Sub-topic added successfully", topic });
+    res.status(200).json(updatedTopic);
   } catch (error) {
-    console.error("Error adding sub-topic:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to add sub-topic", error: error.message });
+    console.error(error);
+    res.status(500).json({
+      message: "Error updating topic",
+      error: error.message,
+    });
   }
 };
 
-// Search and Filter Topics API
-// Search and Filter Topics API (with unitTitle filter)
+// ==============================
+// ✅ DELETE
+// ==============================
+const deleteTopic = async (req, res) => {
+  try {
+    const deleted = await Topic.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Topic not found" });
+    }
+
+    res.status(200).json({
+      message: "Topic deleted successfully",
+      deleted,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error deleting topic",
+      error: error.message,
+    });
+  }
+};
+
+// ==============================
+// ✅ FILTER API
+// ==============================
 const getFilteredTopics = async (req, res) => {
   try {
-    // Extract query parameters (category, search, active, unitTitle)
-    const { category, search, active, unitTitle } = req.query;
+    const { search, active, stream, subject } = req.query;
 
-    // Initialize filter object
     let filter = {};
 
-    // If category is provided, filter by category
-    if (category) {
-      filter.category = category;
-    }
-
-    // If search is provided, filter by title (case-insensitive)
     if (search) {
-      filter.title = { $regex: search, $options: "i" }; // Case-insensitive search for title
+      filter.title = { $regex: search, $options: "i" };
     }
 
-    // If active status is provided, filter by active (true/false)
     if (active !== undefined) {
-      filter.active = active === "true"; // Convert string to boolean
+      filter.active = active === "true";
     }
 
-    // If unitTitle is provided, filter topics by unitTitle
-    if (unitTitle) {
-      filter["units.unitTitle"] = { $regex: unitTitle, $options: "i" }; // Case-insensitive search for unitTitle
+    if (stream && mongoose.Types.ObjectId.isValid(stream)) {
+      filter.stream = stream;
     }
 
-    // Fetch topics from the database based on the filter
-    const topics = await Topic.find(filter);
+    if (subject && mongoose.Types.ObjectId.isValid(subject)) {
+      filter.subject = subject;
+    }
 
-    // Respond with the filtered topics
+    const topics = await Topic.find(filter)
+      .populate("stream", "name")
+      .populate("subject", "title")
+      .populate("unit", "title");
+
     res.json(topics);
   } catch (error) {
     console.error("Error fetching topics:", error);
@@ -199,12 +192,65 @@ const getFilteredTopics = async (req, res) => {
   }
 };
 
+const getAllTopicsIndependent = async (req, res) => {
+  try {
+    const topics = await Topic.find()
+      .select("_id title units") // lightweight response
+      .populate("units", "title");
+
+    res.status(200).json({
+      success: true,
+      data: topics,
+    });
+  } catch (error) {
+    console.error("Error fetching all topics (independent):", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch topics",
+      error: error.message,
+    });
+  }
+};
+
+const getTopicsByUnit = async (req, res) => {
+  try {
+    const { unitId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(unitId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid unit ID",
+      });
+    }
+
+    const topics = await Topic.find({ unit: unitId })
+      .select("_id title")
+      .sort({ createdOn: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: topics,
+    });
+  } catch (error) {
+    console.error("Error fetching topics by unit:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch topics",
+      error: error.message,
+    });
+  }
+};
+
+// ==============================
+// ✅ EXPORT (ONLY ONCE 🔥)
+// ==============================
 module.exports = {
   createTopic,
   getAllTopics,
   getTopicById,
   updateTopic,
   deleteTopic,
-  addSubTopic,
   getFilteredTopics,
+  getAllTopicsIndependent,
+  getTopicsByUnit,
 };

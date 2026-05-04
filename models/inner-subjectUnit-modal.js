@@ -13,6 +13,14 @@ const innerSubjectUnitSchema = new mongoose.Schema({
     type: [String], // Should be an array of strings
     required: true,
   },
+
+  subject: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "subjects", // 👈 your Subject model name
+    required: true,
+    index: true, // 🔥 for fast filtering
+  },
+
   createdBy: {
     type: String,
     required: true,
@@ -36,7 +44,11 @@ const innerSubjectUnitSchema = new mongoose.Schema({
     required: true,
     default: true, // Default value to ensure boolean
   },
-});
+},
+  {
+    timestamps: true // ✅ THIS replaces createdOn & updatedOn
+  },
+);
 
 const InnerSubjectUnit = mongoose.model(
   "InnerSubjectUnit",

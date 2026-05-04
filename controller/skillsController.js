@@ -109,10 +109,33 @@ const deleteSkills = async (req, res) => {
   }
 };
 
+const getSkillsDropdown = async (req, res) => {
+  try {
+    const skills = await Skills.find().select("_id title");
+
+    const formatted = skills.map((item) => ({
+      value: item._id,
+      label: item.title, // ✅ IMPORTANT (you are using title, not name)
+    }));
+
+    res.json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching skills",
+    });
+  }
+};
+
 module.exports = {
   skillsStream, // Fixed the function names
   getSkills,
   getSkillsById,
   updateSkills,
   deleteSkills,
+  getSkillsDropdown,
 };
