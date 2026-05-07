@@ -16,7 +16,7 @@ const subjectSchema = new mongoose.Schema({
   stream:
   {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Stream",
+    ref: "streams",
     required: true,
     index: true,
   },
