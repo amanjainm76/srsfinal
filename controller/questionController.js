@@ -134,10 +134,10 @@ const createQuestion = async (req, res) => {
     level = Array.isArray(level) ? level : level ? [level] : [];
 
     tags = Array.isArray(tags)
-  ? tags.filter(t => t && t.trim() !== "")
-  : typeof tags === "string" && tags.trim() !== ""
-    ? [tags.trim()]
-    : [];
+      ? tags.filter(t => t && t.trim() !== "")
+      : typeof tags === "string" && tags.trim() !== ""
+        ? [tags.trim()]
+        : [];
 
     /* =========================
        ✅ HTML SANITIZE
@@ -163,18 +163,52 @@ const createQuestion = async (req, res) => {
       ? questions.map((q) => ({
         ...q,
 
+        comprehensionText: Array.isArray(q.comprehensionText)
+          ? q.comprehensionText
+            .filter(
+              (subQ) =>
+                subQ.subQuestionType &&
+                ["Comprehension SCQ", "Comprehension MCQ"].includes(
+                  subQ.subQuestionType
+                )
+            )
+            .map((subQ) => ({
+              ...subQ,
+
+              isActiveC:
+                subQ.isActiveC === true ||
+                subQ.isActiveC === "true",
+
+              enterQuestionC: cleanHTML(subQ.enterQuestionC),
+
+              optionsC: (subQ.optionsC || []).map((opt) =>
+                typeof opt === "string"
+                  ? cleanHTML(opt)
+                  : opt
+              ),
+
+              hintsSolutionC: cleanHTML(
+                subQ.hintsSolutionC
+              ),
+            }))
+          : [],
+
         trueFalseAnswer:
           q.trueFalseAnswer === "true"
             ? true
             : q.trueFalseAnswer === "false"
               ? false
-              : null,
+              : undefined,
 
         options: (q.options || []).map((opt) =>
-          typeof opt === "string" ? cleanHTML(opt) : opt
+          typeof opt === "string"
+            ? cleanHTML(opt)
+            : opt
         ),
 
-        subjectiveAnswerFormat: cleanHTML(q.subjectiveAnswerFormat),
+        subjectiveAnswerFormat: cleanHTML(
+          q.subjectiveAnswerFormat
+        ),
       }))
       : [];
 
