@@ -117,20 +117,72 @@ const questionSchema = new mongoose.Schema({
 
       subjectiveAnswerFormat: String,
 
-      comprehensionText: {
-        subQuestionType: [String],
-        isActiveC: Boolean,
-        enterQuestionC: [String],
-        correctAnswersC: [Number],
-        optionsC: [String],
-        urlC: String,
-        hintsSolutionC: [String],
-        streamC: [String],
-        subTopicC: [String],
-        skillsC: [String],
-        tagC: [String],
-        levelC: [String],
-      },
+      comprehensionText: [
+        {
+          subQuestionType: {
+            type: String,
+            enum: [
+              "Comprehension SCQ",
+              "Comprehension MCQ",
+            ],
+          },
+
+          isActiveC: {
+            type: Boolean,
+            default: false,
+          },
+
+          enterQuestionC: {
+            type: String,
+            default: "",
+          },
+
+          optionsC: {
+            type: [String],
+            default: [],
+          },
+
+          correctAnswersC: {
+            type: [Number],
+            default: [],
+          },
+
+          urlC: {
+            type: String,
+            default: "",
+          },
+
+          hintsSolutionC: {
+            type: String,
+            default: "",
+          },
+
+          streamC: {
+            type: [String],
+            default: [],
+          },
+
+          subTopicC: {
+            type: [String],
+            default: [],
+          },
+
+          skillsC: {
+            type: [String],
+            default: [],
+          },
+
+          tagC: {
+            type: [String],
+            default: [],
+          },
+
+          levelC: {
+            type: [String],
+            default: [],
+          },
+        },
+      ],
     },
   ],
 
