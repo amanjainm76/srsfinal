@@ -286,15 +286,316 @@ const getQuestionById = async (req, res) => {
 ========================= */
 const updateQuestion = async (req, res) => {
   try {
-    const updated = await Question.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    ).populate(populateFields);
+    console.log(
+      "UPDATE BODY => ",
+      JSON.stringify(req.body, null, 2)
+    );
 
-    res.json(updated);
+    let {
+      streamId,
+      subjectId,
+      unitId,
+      topicId,
+      subTopicIds,
+
+      enterQuestion,
+      questions,
+
+      url,
+      hitsSolution,
+      skills,
+      tags,
+      level,
+
+      updatedBy,
+      updatedOn,
+      active,
+    } = req.body;
+
+    /* =========================
+       OBJECTID FIX
+    ========================= */
+
+    streamId = mongoose.Types.ObjectId.isValid(streamId)
+      ? new mongoose.Types.ObjectId(streamId)
+      : null;
+
+    subjectId = mongoose.Types.ObjectId.isValid(subjectId)
+      ? new mongoose.Types.ObjectId(subjectId)
+      : null;
+
+    unitId = mongoose.Types.ObjectId.isValid(unitId)
+      ? new mongoose.Types.ObjectId(unitId)
+      : null;
+
+    topicId = mongoose.Types.ObjectId.isValid(topicId)
+      ? new mongoose.Types.ObjectId(topicId)
+      : null;
+
+    subTopicIds = Array.isArray(subTopicIds)
+      ? subTopicIds
+        .filter(id =>
+          mongoose.Types.ObjectId.isValid(id)
+        )
+        .map(
+          id => new mongoose.Types.ObjectId(id)
+        )
+      : [];
+
+    /* =========================
+       FETCH MASTER DATA
+    ========================= */
+
+    const streamData = streamId
+      ? await Stream.findById(streamId)
+      : null;
+
+    const subjectData = subjectId
+      ? await Subject.findById(subjectId)
+      : null;
+
+    const unitData = unitId
+      ? await Unit.findById(unitId)
+      : null;
+
+    const topicData = topicId
+      ? await Topic.findById(topicId)
+      : null;
+
+    const subTopicsData = subTopicIds.length
+      ? await SubTopic.find({
+        _id: { $in: subTopicIds },
+      })
+      : [];
+
+    /* =========================
+       SNAPSHOT OBJECTS
+    ========================= */
+
+    const stream = streamData
+      ? {
+        id: streamData._id,
+        name: streamData.title,
+        code: streamData.code || null,
+      }
+      : null;
+
+    const subject = subjectData
+      ? {
+        id: subjectData._id,
+        name: subjectData.title,
+        code: subjectData.code || null,
+      }
+      : null;
+
+    const unit = unitData
+      ? {
+        id: unitData._id,
+        name: unitData.title,
+        code: unitData.code || null,
+      }
+      : null;
+
+    const topic = topicData
+      ? {
+        id: topicData._id,
+        name: topicData.title,
+        code: topicData.code || null,
+      }
+      : null;
+
+    const subTopics = subTopicsData.map(st => ({
+      id: st._id,
+      name: st.title,
+      code: st.code || null,
+    }));
+
+    /* =========================
+       HTML SANITIZE
+    ========================= */
+
+    const cleanHTML = html => {
+      if (!html) return "";
+
+      return sanitizeHtml(html, {
+        allowedTags: [
+          "b",
+          "i",
+          "em",
+          "strong",
+          "p",
+          "ul",
+          "ol",
+          "li",
+          "br",
+        ],
+        allowedAttributes: {},
+      });
+    };
+
+    /* =========================
+       ARRAY FIXES
+    ========================= */
+
+    skills = Array.isArray(skills)
+      ? skills
+      : [];
+
+    tags = Array.isArray(tags)
+      ? tags
+      : tags
+        ? [tags]
+        : [];
+
+    level = Array.isArray(level)
+      ? level
+      : level
+        ? [level]
+        : [];
+
+    hitsSolution = hitsSolution
+      ? [cleanHTML(hitsSolution)]
+      : [];
+
+    /* =========================
+       QUESTIONS CLEANING
+    ========================= */
+
+    const cleanedQuestions = Array.isArray(
+      questions
+    )
+      ? questions.map(q => ({
+        questionType: q.questionType,
+
+        options: Array.isArray(q.options)
+          ? q.options.map(opt =>
+            cleanHTML(opt)
+          )
+          : [],
+
+        correctAnswers:
+          q.correctAnswers || [],
+
+        matrixAnswer:
+          q.matrixAnswer || {},
+
+        singleInteger:
+          q.singleInteger === ""
+            ? undefined
+            : Number(
+              q.singleInteger
+            ),
+
+        fourDigit:
+          q.fourDigit === ""
+            ? undefined
+            : Number(q.fourDigit),
+
+        numericAnswerStartRange:
+          q.numericAnswerStartRange ===
+            ""
+            ? undefined
+            : Number(
+              q.numericAnswerStartRange
+            ),
+
+        numericAnswerEndRange:
+          q.numericAnswerEndRange ===
+            ""
+            ? undefined
+            : Number(
+              q.numericAnswerEndRange
+            ),
+
+        trueFalseAnswer:
+          q.trueFalseAnswer ===
+            "true"
+            ? true
+            : q.trueFalseAnswer ===
+              "false"
+              ? false
+              : undefined,
+
+        subjectiveAnswerFormat:
+          cleanHTML(
+            q.subjectiveAnswerFormat
+          ),
+
+        comprehensionText:
+          Array.isArray(
+            q.comprehensionText
+          )
+            ? q.comprehensionText.map(
+              subQ => ({
+                ...subQ,
+                enterQuestionC:
+                  cleanHTML(
+                    subQ.enterQuestionC
+                  ),
+                hintsSolutionC:
+                  cleanHTML(
+                    subQ.hintsSolutionC
+                  ),
+              })
+            )
+            : [],
+      }))
+      : [];
+
+    /* =========================
+       UPDATE OBJECT
+    ========================= */
+
+    const updateData = {
+      stream,
+      subject,
+      unit,
+      topic,
+      subTopics,
+
+      enterQuestion:
+        cleanHTML(enterQuestion),
+
+      questions: cleanedQuestions,
+
+      url,
+
+      hitsSolution,
+
+      skills,
+      tags,
+      level,
+
+      active,
+
+      updatedBy,
+      updatedOn,
+    };
+
+    const updated =
+      await Question.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    res.json({
+      success: true,
+      data: updated,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(
+      "UPDATE ERROR => ",
+      err
+    );
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
