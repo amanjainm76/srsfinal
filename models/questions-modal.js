@@ -2,8 +2,11 @@ const mongoose = require("mongoose");
 
 const questionSchema = new mongoose.Schema({
   SRSUniqueCode: {
-    type: Number,
+    type: String,
+    required: true,
     unique: true,
+    trim: true,
+    uppercase: true,
   },
 
   // ✅ STREAM
