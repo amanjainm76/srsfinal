@@ -212,12 +212,25 @@ const createQuestion = async (req, res) => {
       }))
       : [];
 
+
+
+    // Generate Subject Prefix (PHY, CHE, MAT, etc.)
+    const subjectPrefix = subjectData?.title
+      ? subjectData.title.substring(0, 3).toUpperCase()
+      : "GEN";
+
+    // Generate random 8 digit number
+    const randomNumber = Math.floor(
+      10000000 + Math.random() * 90000000
+    );
+
+    const generatedSRSCode = `${subjectPrefix}${randomNumber}`;
+
     /* =========================
        ✅ CREATE DOC (UPDATED STRUCTURE)
     ========================= */
     const newQuestion = new Question({
-      SRSUniqueCode:
-        SRSUniqueCode || Math.floor(100000 + Math.random() * 900000),
+      SRSUniqueCode:generatedSRSCode,
 
       stream,
       subject,
@@ -622,6 +635,8 @@ const filterQuestions = async (req, res) => {
       skill,
       type,
       status,
+      SRSUniqueCode,
+      enterQuestion,
     } = req.query;
 
     let filter = {};
@@ -659,21 +674,42 @@ const filterQuestions = async (req, res) => {
     }
 
     if (level) filter.level = { $regex: new RegExp(level, "i") };
-    if (skill) filter.skills = { $regex: new RegExp(skill, "i") };
-
-    if (type) {
-      filter["questions.questionType"] = {
-        $regex: new RegExp(type, "i"),
+    //if (skill) filter.skills = { $regex: new RegExp(skill, "i") };
+        if (skill) {
+      filter.skills = {
+        $in: [new RegExp(skill, "i")]
       };
     }
 
+    // if (type) {
+    //   filter["questions.questionType"] = {
+    //     $regex: new RegExp(type, "i"),
+    //   };
+    // }
+
+    if (type) {
+      filter["questions.questionType"] = type;
+    }
+
     if (status) {
-      filter.active = status === "active";
+      filter.active = status === "Active";
+    }
+
+    if (SRSUniqueCode) {
+      filter.SRSUniqueCode = {
+        $regex: new RegExp(SRSUniqueCode, "i"),
+      };
+    }
+
+    if (enterQuestion) {
+      filter.enterQuestion = {
+        $regex: new RegExp(enterQuestion, "i"),
+      };
     }
 
     const data = await Question.find(filter);
 
-    console.log("data aaya = ", data);
+    //console.log("data aaya = ", data);
 
     res.json(data);
   } catch (err) {
