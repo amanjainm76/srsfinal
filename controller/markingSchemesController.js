@@ -63,9 +63,7 @@ const createMarkingScheme = async (req, res) => {
 
         // Validate partialMarks structure (singleRightMarks, singleWrongMarks, singleNotAttemptedMarks)
         if (
-          typeof partialMarks.singleRightMarks !== "number" ||
-          typeof partialMarks.singleWrongMarks !== "number" ||
-          typeof partialMarks.singleNotAttemptedMarks !== "number"
+          typeof partialMarks.MarksPerCorrect !== "number"
         ) {
           console.log(
             `Invalid partialMarks structure at index ${index}:`,
@@ -206,15 +204,13 @@ const updateMarkingScheme = async (req, res) => {
 
           // Validate partialMarks structure (singleRightMarks, singleWrongMarks, singleNotAttemptedMarks)
           if (
-            typeof partialMarks.singleRightMarks !== "number" ||
-            typeof partialMarks.singleWrongMarks !== "number" ||
-            typeof partialMarks.singleNotAttemptedMarks !== "number"
+            typeof partialMarks.MarksPerCorrect !== "number"
           ) {
             console.log(
               `Invalid partialMarks structure at index ${index}:`,
               partialMarks
             );
-            return true; // Invalid partialMarks structure found
+            return true;
           }
         } else {
           // For other question types, ensure only marks are provided (partialMarks should be optional)
