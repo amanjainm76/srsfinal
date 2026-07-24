@@ -9,5 +9,7 @@ router.get("/exam", ExamController.getAllExams); // Get all exams
 router.get("/exam/:id", ExamController.getExamById); // Get exam by ID
 router.put("/exam/:id", ExamController.updateExamById); // Update exam by ID
 router.delete("/exam/:id", ExamController.deleteExamById); // Delete exam by ID
+router.get("/guidelines",ExamController.fetchGuidelines); // // Fetch Guidelines
+router.get("/markingscheme",ExamController.fetchMarkingScheme); // // Fetch MarkingScheme
 
 module.exports = router; // Export the router to use in app.js or server.js
