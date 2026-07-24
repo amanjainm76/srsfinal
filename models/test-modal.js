@@ -12,10 +12,6 @@ const testSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
-  testScope: {
-    type: String,
-    required: true,
-  },
   createdBy: {
     type: String,
     required: true,
