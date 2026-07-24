@@ -13,18 +13,34 @@ const examSchema = new mongoose.Schema({
     type: String, // Change to String for a single description
     required: true,
   },
-  markingScheme: {
-    type: String, // Change to String for a single value
-    required: true,
+
+markingScheme: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "markingSchemes",
+      required: true,
+    },
+    name: String,
   },
+
   guildeline: {
-    type: String, // Change to String for a single value
-    required: true,
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "guidelines",
+      required: true,
+    },
+    name: String,
   },
-  stream: {
-    type: String, // Change to String for a single value
-    required: true,
-  },
+
+  // markingScheme: {
+  //   type: String,
+  //   required: true,
+  // },
+  // guildeline: {
+  //   type: String,
+  //   required: true,
+  // },
+
 
   createdBy: {
     type: String,
@@ -46,7 +62,7 @@ const examSchema = new mongoose.Schema({
   },
   active: {
     type: Boolean,
-    default: true, // Set default to true for new exams
+    default: true,
   },
 });
 
