@@ -2,7 +2,7 @@ const Test = require("../models/test-modal");
 
 // Create Test
 const createTest = async (req, res) => {
-  const { title, url, description, testScope, createdOn, updatedOn, active } =
+  const { title, url, description, createdOn, updatedOn, active } =
     req.body;
 
   try {
@@ -19,7 +19,6 @@ const createTest = async (req, res) => {
       title,
       url,
       description: cleanContent,
-      testScope,
       createdBy: "superadmin",
       createdOn,
       updatedBy: "superadmin",
@@ -68,7 +67,7 @@ const getTestById = async (req, res) => {
 // Update a Test by ID
 const updateTest = async (req, res) => {
   const { id } = req.params;
-  const { title, url, description, testScope, updatedBy, updatedOn, active } =
+  const { title, url, description, updatedBy, updatedOn, active } =
     req.body;
 
   try {
@@ -78,7 +77,6 @@ const updateTest = async (req, res) => {
         title,
         url,
         description,
-        testScope,
         updatedBy: updatedBy || "super admin",
         updatedOn,
         active,
