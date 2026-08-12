@@ -9,6 +9,11 @@ const {
   deleteTestList,
   filterTestListsByTestType,
   filterTestListsByTestTypeAndContent,
+  fetchExamType,
+  fetchTestType,
+  fetchGuidelines,
+  fetchMarkingScheme,
+  fetchTags,
 } = require("../controller/testListController"); // Adjust the path to the controller
 // Route to create a new TestList
 router.post("/testlists", createTestList);
@@ -28,5 +33,15 @@ router.put("/testlists/:id", updateTestList);
 
 // Route to delete a TestList by ID
 router.delete("/testlists/:id", deleteTestList);
+
+router.get("/examtypes",fetchExamType);
+
+router.get("/testtypes",fetchTestType);
+
+router.get("/guidelines",fetchGuidelines);
+
+router.get("/markingscheme",fetchMarkingScheme);
+
+router.get("/tags",fetchTags);
 
 module.exports = router;
