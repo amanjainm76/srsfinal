@@ -349,65 +349,65 @@ const createTestList = async (req, res) => {
     const normalizedSections =
       Array.isArray(sections)
         ? await Promise.all(
-            sections.map(
-              async section => {
+          sections.map(
+            async section => {
 
-                const sectionGuidelineData =
-                  await getIdTitleArray(
-                    section.sectionGuideline ||
-                      [],
-                    Guidelines
-                  );
+              const sectionGuidelineData =
+                await getIdTitleArray(
+                  section.sectionGuideline ||
+                  [],
+                  Guidelines
+                );
 
-                const sectionMarkingSchemeData =
-                  await getIdTitleArray(
-                    section.sectionMarkingScheme ||
-                      [],
-                    MarkingScheme
-                  );
+              const sectionMarkingSchemeData =
+                await getIdTitleArray(
+                  section.sectionMarkingScheme ||
+                  [],
+                  MarkingScheme
+                );
 
-                return {
+              return {
 
-                  sectionName:
-                    section.sectionName ||
-                    "",
+                sectionName:
+                  section.sectionName ||
+                  "",
 
-                  sectionDescription:
-                    section.sectionDescription ||
-                    "",
+                sectionDescription:
+                  section.sectionDescription ||
+                  "",
 
-                  sectionDisplayOrder:
-                    Number(
-                      section.sectionDisplayOrder
-                    ) || 0,
+                sectionDisplayOrder:
+                  Number(
+                    section.sectionDisplayOrder
+                  ) || 0,
 
-                  sectionMaximumQuestions:
-                    Number(
-                      section.sectionMaximumQuestions
-                    ) || 0,
+                sectionMaximumQuestions:
+                  Number(
+                    section.sectionMaximumQuestions
+                  ) || 0,
 
-                  sectionGuideline:
-                    sectionGuidelineData,
+                sectionGuideline:
+                  sectionGuidelineData,
 
-                  sectionMarkingScheme:
-                    sectionMarkingSchemeData,
+                sectionMarkingScheme:
+                  sectionMarkingSchemeData,
 
-                  // Questions
-                  questions:
-                    Array.isArray(
-                      section.questions
-                    )
-                      ? section.questions
-                      : [],
+                // Questions
+                questions:
+                  Array.isArray(
+                    section.questions
+                  )
+                    ? section.questions
+                    : [],
 
-                  isActiveSection:
-                    Boolean(
-                      section.isActiveSection
-                    ),
-                };
-              }
-            )
+                isActiveSection:
+                  Boolean(
+                    section.isActiveSection
+                  ),
+              };
+            }
           )
+        )
         : [];
 
 
@@ -823,9 +823,9 @@ const updateTestList = async (
                   section.sectionGuideline
                 )
                   ? await getIdTitleArray(
-                      section.sectionGuideline,
-                      Guidelines
-                    )
+                    section.sectionGuideline,
+                    Guidelines
+                  )
                   : [];
 
 
@@ -838,9 +838,9 @@ const updateTestList = async (
                   section.sectionMarkingScheme
                 )
                   ? await getIdTitleArray(
-                      section.sectionMarkingScheme,
-                      MarkingScheme
-                    )
+                    section.sectionMarkingScheme,
+                    MarkingScheme
+                  )
                   : [];
 
 
@@ -867,9 +867,9 @@ const updateTestList = async (
                 // Keep section Mongo ID if present
                 ...(section._id
                   ? {
-                      _id:
-                        section._id,
-                    }
+                    _id:
+                      section._id,
+                  }
                   : {}),
 
                 sectionName:
@@ -1145,58 +1145,42 @@ const deleteTestList = async (
 // FILTER BY TEST TYPE
 // ============================================================
 
-const filterTestListsByTestType =
-  async (req, res) => {
+const filterTestListsByTestType = async (req, res) => {
 
-    const { testType } =
-      req.query;
+  const { testType } = req.query;
 
-    try {
+  try {
 
-      if (!testType) {
-        return res.status(400).json({
-          message:
-            "testType parameter is required",
-        });
-      }
-
-      const testTypeString =
-        String(testType);
-
-      const filteredTestLists =
-        await TestList.find({
-          "testType.title": {
-            $regex:
-              new RegExp(
-                testTypeString,
-                "i"
-              ),
-          },
-        });
-
-      if (
-        filteredTestLists.length === 0
-      ) {
-        return res.status(404).json({
-          message:
-            "No test lists found for this test type",
-        });
-      }
-
-      return res.status(200).json(
-        filteredTestLists
-      );
-
-    } catch (error) {
-
-      return res.status(500).json({
-        message:
-          "Error fetching test lists",
-        error:
-          error.message,
+    if (!testType) {
+      return res.status(400).json({
+        message: "testType parameter is required",
       });
     }
-  };
+
+    const testTypeString = String(testType).trim();
+
+    // Test Type ID ke basis par filter
+    const filteredTestLists = await TestList.find({
+      "testType.id": testTypeString,
+    });
+
+    return res.status(200).json(
+      filteredTestLists
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Error filtering tests by Test Type:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Error fetching test lists",
+      error: error.message,
+    });
+  }
+};
 
 
 // ============================================================
@@ -1215,18 +1199,13 @@ const filterTestListsByTestTypeAndContent =
 
       const decodedTestType =
         testType
-          ? decodeURIComponent(
-              testType
-            )
+          ? decodeURIComponent(testType).trim()
           : null;
 
       const decodedContent =
         content
-          ? decodeURIComponent(
-              content
-            ).trim()
+          ? decodeURIComponent(content).trim()
           : null;
-
 
       if (
         !decodedTestType &&
@@ -1238,57 +1217,45 @@ const filterTestListsByTestTypeAndContent =
         });
       }
 
-
       const filter = {};
 
+      // ==========================================
+      // TEST TYPE
+      // ==========================================
 
       if (decodedTestType) {
 
-        filter[
-          "testType.title"
-        ] = {
-          $regex:
-            new RegExp(
-              decodedTestType,
-              "i"
-            ),
-        };
+        filter["testType.id"] =
+          decodedTestType;
       }
 
+      // ==========================================
+      // CONTENT
+      // ==========================================
 
       if (decodedContent) {
 
         filter.content = {
-          $regex:
-            new RegExp(
-              decodedContent,
-              "i"
-            ),
+          $regex: new RegExp(
+            decodedContent,
+            "i"
+          ),
         };
       }
 
-
       const filteredTestLists =
-        await TestList.find(
-          filter
-        );
-
-
-      if (
-        filteredTestLists.length === 0
-      ) {
-        return res.status(404).json({
-          message:
-            "No test lists found matching the provided criteria",
-        });
-      }
-
+        await TestList.find(filter);
 
       return res.status(200).json(
         filteredTestLists
       );
 
     } catch (error) {
+
+      console.error(
+        "Error filtering test lists:",
+        error
+      );
 
       return res.status(500).json({
         message:
