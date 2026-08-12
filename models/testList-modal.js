@@ -5,121 +5,223 @@ const testListSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
   url: {
     type: String,
     required: true,
   },
+
   content: {
-    type: [String],
+    type: String,
+    default: "",
   },
-  examType: {
-    type: [String],
-    required: true,
-  },
-  testType: [
+
+  // Exam Type - Multiple
+  examType: [
     {
-      testType: {
-        type: [String],
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
       },
-      subTopic: {
-        type: [String],
-      },
-      subjectsData: {
-        type: [String],
-      },
-      syllabus: {
-        type: [String],
-      },
-      topic: {
-        type: [String],
-      },
-      unit: {
-        type: [String],
+
+      title: {
+        type: String,
+        required: true,
       },
     },
   ],
+
+  // Test Type - Single
+  testType: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+
+    title: {
+      type: String,
+      required: true,
+    },
+  },
+
+  // Test Instructions - ReactQuill HTML
+  testInstructions: {
+    type: String,
+    default: "",
+  },
+
+  // Maximum Questions
   maxQuestions: {
     type: Number,
     required: true,
   },
+
+  // Duration
   duration: {
     type: Number,
     required: true,
   },
-  guideline: {
-    type: [String],
-    required: true,
-  },
-  markingScheme: {
-    type: [String],
-    required: true,
-  },
+
+  // Guidelines - Multiple
+  guideline: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      },
+
+      title: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
+
+  // Marking Scheme - Multiple
+  markingScheme: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      },
+
+      title: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
+
   startDate: {
     type: String,
     required: true,
   },
+
   endDate: {
     type: String,
     required: true,
   },
+
   solutionUnlockDate: {
     type: String,
     required: true,
   },
-  tags: {
-    type: [String], // Ensure the field name matches the client-side
-    required: true,
-  },
+
+  // Tags - Multiple
+  tags: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      },
+
+      title: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
+
   isActiveHasSection: {
     type: Boolean,
+    default: false,
   },
+
+  // Sections
   sections: [
     {
       sectionName: {
         type: String,
+        default: "",
       },
+
       sectionDescription: {
         type: String,
+        default: "",
       },
+
       sectionDisplayOrder: {
         type: Number,
       },
-      sectionGuideline: {
-        type: [String],
+
+      sectionMaximumQuestions: {
+        type: Number,
       },
-      sectionMarkingScheme: {
-        type: [String],
+
+      // Section Guidelines
+      sectionGuideline: [
+        {
+          id: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+          },
+
+          title: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+
+      // Section Marking Scheme
+      sectionMarkingScheme: [
+        {
+          id: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+          },
+
+          title: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+
+      questions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "questions",
       },
+    ],
+
       isActiveSection: {
         type: Boolean,
+        default: false,
       },
     },
   ],
+
   createdBy: {
     type: String,
     required: true,
     default: "super admin",
   },
+
   createdOn: {
     type: String,
     required: true,
   },
+
   updatedBy: {
     type: String,
     required: true,
     default: "super admin",
   },
+
   updatedOn: {
     type: String,
     required: true,
   },
+
   active: {
     type: Boolean,
     required: true,
   },
+
   select: {
     type: Boolean,
-    default: false, // By default, set 'select' to false
+    default: false,
   },
 });
 
