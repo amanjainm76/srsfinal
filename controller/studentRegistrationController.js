@@ -53,7 +53,6 @@ const createStudentRegistration = async (req, res) => {
       "studentName",
       "studentEmail",
       "studentPhone",
-      "course",
       "qualification",
       "fatherName",
       "motherName",
@@ -427,18 +426,6 @@ const updateCurrentStudentProfile = async (req, res) => {
           message: "Password must be at least 6 characters long",
         });
       }
-
-      // Password validation regex
-      if (
-        !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(
-          updateData.password,
-        )
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must contain at least one letter and one number",
-        });
-      }
     }
 
     // Prevent updating sensitive fields directly
@@ -520,18 +507,22 @@ const updateStudentById = async (req, res) => {
     }
 
     // Find existing student
-    const existingStudent = await StudentRegistration.findById(id);
-    if (!existingStudent) {
+    const student = await StudentRegistration.findById(id);
+
+    if (!student) {
       return res.status(404).json({
         success: false,
         message: "Student not found",
       });
     }
 
-    // Validate email uniqueness if being updated
+    // =========================================================
+    // Email validation
+    // =========================================================
     if (
       updateData.studentEmail &&
-      updateData.studentEmail !== existingStudent.studentEmail
+      updateData.studentEmail.toLowerCase() !==
+        student.studentEmail.toLowerCase()
     ) {
       const emailExists = await StudentRegistration.findOne({
         studentEmail: updateData.studentEmail.toLowerCase(),
@@ -546,10 +537,13 @@ const updateStudentById = async (req, res) => {
       }
     }
 
-    // Validate phone uniqueness if being updated
+    // =========================================================
+    // Phone validation
+    // =========================================================
     if (updateData.studentPhone) {
       const cleanPhone = updateData.studentPhone.replace(/\D/g, "");
-      if (cleanPhone !== existingStudent.studentPhone) {
+
+      if (cleanPhone !== student.studentPhone) {
         const phoneExists = await StudentRegistration.findOne({
           studentPhone: cleanPhone,
           _id: { $ne: id },
@@ -562,20 +556,57 @@ const updateStudentById = async (req, res) => {
           });
         }
       }
+
       updateData.studentPhone = cleanPhone;
     }
 
-    // Handle password update
-    if (updateData.password) {
-      if (updateData.password.length < 6) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 6 characters long",
-        });
+    // =========================================================
+    // Password validation
+    // =========================================================
+    if (updateData.password !== undefined) {
+      // Empty password means:
+      // Don't change existing password
+      if (updateData.password === "") {
+        delete updateData.password;
+      } else {
+        if (typeof updateData.password !== "string") {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid password format",
+          });
+        }
+
+        if (updateData.password.length < 6) {
+          return res.status(400).json({
+            success: false,
+            message: "Password must be at least 6 characters long",
+          });
+        }
+
+        if (updateData.password.length > 128) {
+          return res.status(400).json({
+            success: false,
+            message: "Password cannot exceed 128 characters",
+          });
+        }
+
+        /*
+         * IMPORTANT:
+         *
+         * We DO NOT bcrypt.hash() here manually.
+         *
+         * We assign the plain password to the Mongoose document
+         * and call save() below.
+         *
+         * The StudentRegistration model's pre("save") middleware
+         * will hash the password automatically.
+         */
       }
     }
 
-    // Prevent updating sensitive fields
+    // =========================================================
+    // Protected fields
+    // =========================================================
     const protectedFields = [
       "loginAttempts",
       "lockUntil",
@@ -588,30 +619,55 @@ const updateStudentById = async (req, res) => {
       "__v",
     ];
 
-    protectedFields.forEach(field => delete updateData[field]);
+    protectedFields.forEach(field => {
+      delete updateData[field];
+    });
 
+    // =========================================================
     // Clean email
+    // =========================================================
     if (updateData.studentEmail) {
-      updateData.studentEmail = updateData.studentEmail.toLowerCase();
+      updateData.studentEmail =
+        updateData.studentEmail.toLowerCase().trim();
     }
 
-    // Add update metadata
-    updateData.updatedBy = "admin";
-    updateData.updatedOn = formatDate();
+    // =========================================================
+    // Apply updates to Mongoose document
+    // =========================================================
+    Object.keys(updateData).forEach(field => {
+      student[field] = updateData[field];
+    });
 
-    // Update student
-    const updatedStudent = await StudentRegistration.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true, runValidators: true },
-    )
-      .populate("center stream batch")
-      .select("-password -passwordResetToken -__v");
+    // =========================================================
+    // Metadata
+    // =========================================================
+    student.updatedBy = "admin";
+    student.updatedOn = formatDate();
+
+    // =========================================================
+    // SAVE DOCUMENT
+    // =========================================================
+    // IMPORTANT:
+    // save() triggers pre("save") password hashing middleware.
+    // Therefore a new password will be encrypted/hashed before
+    // being stored in MongoDB.
+    // =========================================================
+    const updatedStudent = await student.save();
+
+    // Populate after save
+    await updatedStudent.populate("center stream batch");
+
+    // Convert to JSON and remove sensitive fields
+    const studentResponse = updatedStudent.toObject();
+
+    delete studentResponse.password;
+    delete studentResponse.passwordResetToken;
+    delete studentResponse.__v;
 
     res.status(200).json({
       success: true,
       message: "Student updated successfully",
-      student: updatedStudent,
+      student: studentResponse,
     });
   } catch (error) {
     console.error("Error updating student:", error);
@@ -620,6 +676,7 @@ const updateStudentById = async (req, res) => {
       const validationErrors = Object.values(error.errors).map(
         err => err.message,
       );
+
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -634,6 +691,7 @@ const updateStudentById = async (req, res) => {
     });
   }
 };
+
 
 // Create student profile
 const createStudentProfile = async (req, res) => {
