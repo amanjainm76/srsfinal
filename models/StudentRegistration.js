@@ -54,15 +54,6 @@ const StudentRegistrationSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
       maxlength: [128, "Password cannot exceed 128 characters"],
-      validate: {
-        validator: function (password) {
-          // Password must contain at least one number, one letter
-          return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(
-            password,
-          );
-        },
-        message: "Password must contain at least one letter and one number",
-      },
     },
 
     // ✅ Profile Image Field (Exactly as requested)
@@ -85,7 +76,7 @@ const StudentRegistrationSchema = new mongoose.Schema(
 
     course: {
       type: String,
-      required: [true, "Course/Stream is required"],
+      required: [false, "Course/Stream is required"],
       trim: true,
       maxlength: [100, "Course name cannot exceed 100 characters"],
     },
