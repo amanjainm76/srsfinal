@@ -36,6 +36,7 @@ const testStudentRoutes = require("./router/studentRoutes/testStudentRoutes");
 const studentMaterialRoutes = require("./router/studentRoutes/studentMaterialRoutes");
 const CenterRoutes = require("./router/center-router");
 const batchRoutes = require("./router/batch-router");
+const testAssignmentRoutes = require("./router/testAssignmentRoutes");
 const corsOption = {
   method: "GET,POST,PUT,DELETE,PATCH,HEAD",
   credential: true,
