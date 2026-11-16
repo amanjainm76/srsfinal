@@ -223,6 +223,13 @@ const testListSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+
+  status: {
+  type: String,
+  enum: ["Draft", "Ready", "Assigned"],
+  default: "Draft",
+  index: true,
+},
 });
 
 const TestList = mongoose.model("TestList", testListSchema);
