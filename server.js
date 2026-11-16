@@ -93,6 +93,7 @@ app.use("/api/tests", testStudentRoutes);
 app.use("/api/student/materials", studentMaterialRoutes);
 app.use("/api/auth/center", CenterRoutes);
 app.use("/api/auth/batch", batchRoutes);
+app.use("/api/auth/assign-test", testAssignmentRoutes);
 app.get("/api/student/materials/test", (req, res) => {
   console.log("✅ TEST ROUTE HIT");
   res.json({ success: true, message: "Test route works" });
