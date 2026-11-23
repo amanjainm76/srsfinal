@@ -14,6 +14,7 @@ const {
   fetchGuidelines,
   fetchMarkingScheme,
   fetchTags,
+  getQuestionPaperByTestId,
 } = require("../controller/testListController"); // Adjust the path to the controller
 // Route to create a new TestList
 router.post("/testlists", createTestList);
@@ -43,5 +44,10 @@ router.get("/guidelines",fetchGuidelines);
 router.get("/markingscheme",fetchMarkingScheme);
 
 router.get("/tags",fetchTags);
+
+router.get(
+  "/testlists/:id/question-paper",
+  getQuestionPaperByTestId
+);
 
 module.exports = router;
