@@ -1094,6 +1094,122 @@ const fetchTags = async (req, res) => {
   }
 };
 
+
+
+
+// ============================================================
+// GET QUESTION PAPER BY TEST ID
+// Populate actual question documents
+// ============================================================
+
+
+const getQuestionPaperByTestId = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Test ID"
+      });
+    }
+
+    // Fetch Test with Questions
+    const test = await TestList.findById(id)
+      .populate({
+        path: "sections.questions",
+        model: "questions"
+      })
+      .lean();
+
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: "Test not found"
+      });
+    }
+
+    // Collect all guideline IDs
+    const guidelineIds = [
+      ...(test.guideline || []).map(item => item.id),
+
+      ...(test.sections || []).flatMap(section =>
+        (section.sectionGuideline || []).map(item => item.id)
+      )
+    ]
+      .filter(Boolean)
+      .map(String);
+
+    // Fetch actual guideline documents
+    const guidelineDocuments = guidelineIds.length
+      ? await Guidelines.find({
+          _id: { $in: guidelineIds }
+        }).lean()
+      : [];
+
+    // Create guideline lookup
+    const guidelineMap = {};
+
+    guidelineDocuments.forEach(item => {
+      guidelineMap[String(item._id)] = item;
+    });
+
+    // Attach content to main guidelines
+    test.guideline = (test.guideline || []).map(item => {
+      const guideline = guidelineMap[String(item.id)];
+
+      return {
+        ...item,
+        content: guideline?.content || ""
+      };
+    });
+
+    // Attach content to section guidelines
+    test.sections = (test.sections || [])
+      .sort(
+        (a, b) =>
+          Number(a.sectionDisplayOrder || 0) -
+          Number(b.sectionDisplayOrder || 0)
+      )
+      .map(section => ({
+        ...section,
+
+        sectionGuideline: (section.sectionGuideline || []).map(item => {
+          const guideline = guidelineMap[String(item.id)];
+
+          return {
+            ...item,
+            content: guideline?.content || ""
+          };
+        }),
+
+        questions: (section.questions || []).filter(
+          question =>
+            question &&
+            typeof question === "object" &&
+            question._id
+        )
+      }));
+
+    return res.status(200).json({
+      success: true,
+      data: test
+    });
+
+  } catch (error) {
+    console.error("Question Paper Fetch Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch question paper",
+      error: error.message
+    });
+  }
+};
+
+
+
+
 // ============================================================
 // EXPORT
 // ============================================================
@@ -1122,4 +1238,5 @@ module.exports = {
   fetchMarkingScheme,
 
   fetchTags,
+  getQuestionPaperByTestId,
 };
